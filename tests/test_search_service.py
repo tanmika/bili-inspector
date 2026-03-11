@@ -59,6 +59,8 @@ def test_run_search_returns_compact_results_without_artifacts():
             "keyword": "原神 启动器",
             "page": 1,
             "limit": 10,
+            "total": 1234,
+            "pages": 62,
             "returned": 2,
             "results": [
                 {

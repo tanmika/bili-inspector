@@ -172,6 +172,56 @@ def test_run_command_stepwise_fetch_accumulates_full_snapshot(monkeypatch):
 
 
 
+def test_run_command_inspect_writes_readme_and_matching_artifacts(monkeypatch):
+    bvid = "BV1aurMBCEg1"
+    out_dir = default_output_dir(bvid)
+    shutil.rmtree(out_dir, ignore_errors=True)
+
+    monkeypatch.setattr("bili_inspector.cli.BrowserClient", FakeBrowser)
+    monkeypatch.setattr(
+        "bili_inspector.cli.resolve_video",
+        lambda browser, actual_bvid: (
+            fake_meta(actual_bvid),
+            [
+                {"lan": "fr", "lan_doc": "Français", "subtitle_url": "https://example.com/fr.json"},
+                {"lan": "ja", "lan_doc": "日本語", "subtitle_url": "https://example.com/ja.json"},
+            ],
+        ),
+    )
+    monkeypatch.setattr(
+        "bili_inspector.service.http_get_json",
+        lambda url: {"body": [{"from": 0, "to": 1, "content": "subtitle"}]},
+    )
+    monkeypatch.setattr(
+        "bili_inspector.service.fetch_comments",
+        lambda browser, aid, mode, limit, subreply_limit: [
+            {"rpid": "1", "user": "u", "like": 1, "reply_count": 0, "message": f"m-{mode}"}
+        ],
+    )
+
+    parser = build_parser()
+    args = parser.parse_args(["inspect", bvid, "--json"])
+    envelope = run_command(args).to_dict()
+
+    try:
+        readme = (out_dir / "README.md").read_text(encoding="utf-8")
+        disk_files = sorted(str(path.relative_to(out_dir)) for path in out_dir.rglob("*") if path.is_file())
+
+        assert envelope["artifacts"]["output_dir"] == str(out_dir)
+        assert envelope["data"]["subtitles"]["fetched_langs"] == ["ja"]
+        assert envelope["warnings"] == []
+        assert "## 字幕文件说明" in readme
+        assert "`*.plain.txt`：纯文本，最适合 AI 直接阅读、总结、抽取主题。" in readme
+        assert "## 评论文件说明" in readme
+        assert "`comments/hot.json` / `comments/latest.json`：结构化数据，适合 AI 程序化解析。" in readme
+        assert "- `ja` / 日本語" in readme
+        assert "- `fr` / Français" not in readme
+        assert "- `subtitles/ja.plain.txt`" in readme
+        assert "- `comments/hot.json`" in readme
+        assert sorted(envelope["artifacts"]["files"]) == disk_files
+    finally:
+        shutil.rmtree(out_dir, ignore_errors=True)
+
 
 
 def test_run_command_search_returns_compact_results_without_artifacts(monkeypatch):
@@ -211,6 +261,8 @@ def test_run_command_search_returns_compact_results_without_artifacts(monkeypatc
                 "keyword": "原神 启动器",
                 "page": 1,
                 "limit": 10,
+                "total": 1234,
+                "pages": 62,
                 "returned": 2,
                 "results": [
                     {"title": "原神 启动器", "bvid": "BV1aaaaaa111", "pubdate": "2024-03-01 17:50:00", "play": "12.3万"},

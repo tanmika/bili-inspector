@@ -220,6 +220,8 @@ def run_search(
             "keyword": keyword,
             "page": page,
             "limit": limit,
+            "total": int(data.get("numResults") or 0),
+            "pages": int(data.get("numPages") or 0),
             "returned": len(results),
             "results": results,
         }
@@ -392,7 +394,7 @@ def reset_output_subdir(output_dir: Path, name: str) -> Path:
 
 
 def prune_output_root(output_dir: Path) -> None:
-    managed_names = {"README.md", "meta.json", "comments", "subtitles", "search"}
+    managed_names = {"README.md", "meta.json", "comments", "subtitles"}
     if not output_dir.exists():
         return
     for path in output_dir.iterdir():

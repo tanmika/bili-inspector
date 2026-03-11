@@ -41,6 +41,7 @@ python3 -m bili_inspector --help
 ```bash
 bili-inspector inspect <bvid> [options]
 bili-inspector meta <bvid> [options]
+bili-inspector subtitles <bvid> [options]
 bili-inspector comments <bvid> [options]
 bili-inspector search <keyword...> [options]
 bili-inspector doctor [options]
@@ -239,6 +240,8 @@ bili-inspector doctor --json
       "keyword": "原神 启动器",
       "page": 1,
       "limit": 10,
+      "total": 1234,
+      "pages": 62,
       "returned": 2,
       "results": [
         {
