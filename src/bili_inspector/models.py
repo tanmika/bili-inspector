@@ -12,6 +12,9 @@ SCHEMA_VERSION = "1"
 class CommandContext:
     command: str
     bvid: str | None
+    keyword: str | None
+    page: int | None
+    limit: int | None
     session_name: str
     out_dir: Path | None
     json_output: bool

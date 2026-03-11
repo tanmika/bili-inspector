@@ -4,7 +4,7 @@ from bili_inspector.models import ArtifactManifest, CommandContext
 
 
 def test_success_result_envelope_shape():
-    ctx = CommandContext(command="meta", bvid="BV1aurMBCEkE", session_name="main", out_dir=None, json_output=True, verbose=False)
+    ctx = CommandContext(command="meta", bvid="BV1aurMBCEkE", keyword=None, page=None, limit=None, session_name="main", out_dir=None, json_output=True, verbose=False)
     envelope = success_envelope(
         ctx,
         data={"video": {"bvid": "BV1aurMBCEkE"}},
@@ -24,7 +24,7 @@ def test_success_result_envelope_shape():
 
 
 def test_success_result_envelope_allows_empty_warnings_for_inspect():
-    ctx = CommandContext(command="inspect", bvid="BV1aurMBCEkE", session_name="main", out_dir=None, json_output=True, verbose=False)
+    ctx = CommandContext(command="inspect", bvid="BV1aurMBCEkE", keyword=None, page=None, limit=None, session_name="main", out_dir=None, json_output=True, verbose=False)
     envelope = success_envelope(
         ctx,
         data={"video": {"bvid": "BV1aurMBCEkE"}},
@@ -32,3 +32,21 @@ def test_success_result_envelope_allows_empty_warnings_for_inspect():
     )
     payload = envelope.to_dict()
     assert payload["warnings"] == []
+
+
+
+def test_success_result_envelope_includes_search_input_without_artifacts():
+    ctx = CommandContext(command="search", bvid=None, keyword="原神", page=1, limit=10, session_name="main", out_dir=None, json_output=True, verbose=False)
+    envelope = success_envelope(
+        ctx,
+        data={"search": {"keyword": "原神", "page": 1, "limit": 10, "returned": 1, "results": []}},
+    )
+    payload = envelope.to_dict()
+    assert payload == {
+        "ok": True,
+        "schema_version": "1",
+        "command": "search",
+        "input": {"session_name": "main", "keyword": "原神", "page": 1, "limit": 10},
+        "data": {"search": {"keyword": "原神", "page": 1, "limit": 10, "returned": 1, "results": []}},
+        "warnings": [],
+    }

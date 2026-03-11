@@ -3,13 +3,14 @@ from __future__ import annotations
 import argparse
 import gzip
 import hashlib
+import html
 import json
 import re
 import shutil
 import time
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlencode
+from urllib.parse import quote, urlencode
 from urllib.request import Request, urlopen
 
 from .browser import BrowserClient
@@ -51,6 +52,7 @@ WBI_MIXIN_KEY_ENC_TAB = [
 BVID_PATTERN = re.compile(r"^BV[0-9A-Za-z]{10}$")
 MODE_MAP = {"hot": 3, "latest": 2}
 LimitValue = int | None
+SEARCH_TITLE_TAG_RE = re.compile(r"<[^>]+>")
 
 
 
@@ -62,6 +64,24 @@ def parse_limit(raw: str) -> LimitValue:
     if number <= 0:
         raise argparse.ArgumentTypeError("数量必须为正整数，或使用 all")
     return number
+
+
+
+def parse_search_page(raw: str) -> int:
+    value = int(raw.strip())
+    if value <= 0:
+        raise argparse.ArgumentTypeError("页码必须为正整数")
+    return value
+
+
+
+def parse_search_limit(raw: str) -> int:
+    value = int(raw.strip())
+    if value <= 0:
+        raise argparse.ArgumentTypeError("limit 必须为正整数")
+    if value > 20:
+        raise argparse.ArgumentTypeError("limit 不能超过 20")
+    return value
 
 
 
@@ -140,6 +160,85 @@ def simplify_reply(reply: dict[str, Any]) -> dict[str, Any]:
         "reply_count": reply.get("rcount") or 0,
         "message": content.get("message") or "",
     }
+
+
+
+def build_search_page_url(keyword: str) -> str:
+    return f"https://search.bilibili.com/all?keyword={quote(keyword)}"
+
+
+
+def build_search_api_url(keyword: str, page: int) -> str:
+    query = urlencode({"search_type": "video", "keyword": keyword, "page": page})
+    return f"https://api.bilibili.com/x/web-interface/search/type?{query}"
+
+
+
+def strip_search_title_html(value: str) -> str:
+    return html.unescape(SEARCH_TITLE_TAG_RE.sub("", value or "")).strip()
+
+
+
+def normalize_search_result(item: dict[str, Any]) -> dict[str, str]:
+    bvid = str(item.get("bvid") or "").strip()
+    return {
+        "title": strip_search_title_html(str(item.get("title") or "")),
+        "bvid": bvid,
+        "pubdate": timestamp_to_iso(int(item.get("pubdate") or 0)),
+        "play": str(item.get("play") or ""),
+    }
+
+
+
+def write_search_raw_artifact(output_dir: Path, raw_payload: dict[str, Any]) -> list[str]:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    write_json(output_dir / "raw.json", raw_payload)
+    return list_artifact_files(output_dir)
+
+
+
+def run_search(
+    browser: BrowserClient,
+    keyword: str,
+    page: int,
+    limit: int,
+    save_raw: bool = False,
+    out_dir: Path | None = None,
+) -> tuple[dict[str, Any], ArtifactManifest | None]:
+    browser.open(build_search_page_url(keyword))
+    payload = browser.fetch_json(build_search_api_url(keyword, page))
+    if int(payload.get("code", -1)) != 0:
+        raise BilibiliApiFailedError("search.fetch_results", str(payload)[:300])
+
+    data = payload.get("data") or {}
+    raw_results = data.get("result") or []
+    filtered = [item for item in raw_results if str(item.get("bvid") or "").strip()]
+    results = [normalize_search_result(item) for item in filtered[:limit]]
+
+    search_payload = {
+        "search": {
+            "keyword": keyword,
+            "page": page,
+            "limit": limit,
+            "returned": len(results),
+            "results": results,
+        }
+    }
+
+    if not save_raw or out_dir is None:
+        return search_payload, None
+
+    raw_artifact = {
+        "keyword": keyword,
+        "page": page,
+        "limit": limit,
+        "total": int(data.get("numResults") or 0),
+        "pages": int(data.get("numPages") or 0),
+        "result": raw_results,
+    }
+    files = write_search_raw_artifact(out_dir, raw_artifact)
+    manifest = ArtifactManifest(output_dir=str(out_dir), files=files)
+    return search_payload, manifest
 
 
 
@@ -293,7 +392,7 @@ def reset_output_subdir(output_dir: Path, name: str) -> Path:
 
 
 def prune_output_root(output_dir: Path) -> None:
-    managed_names = {"README.md", "meta.json", "comments", "subtitles"}
+    managed_names = {"README.md", "meta.json", "comments", "subtitles", "search"}
     if not output_dir.exists():
         return
     for path in output_dir.iterdir():

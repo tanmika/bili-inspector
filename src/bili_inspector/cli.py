@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
@@ -10,7 +11,21 @@ from . import __version__
 from .browser import BrowserClient, run_doctor
 from .errors import EXIT_INTERNAL, CliUsageError, InspectorError, InternalInspectorError
 from .models import ArtifactManifest, CommandContext, ErrorPayload, ResultEnvelope, SCHEMA_VERSION, to_plain_data
-from .service import MODE_MAP, parse_bvid, parse_limit, resolve_video, run_comments, run_inspect, run_subtitles, build_meta_payload, write_meta_artifact, write_summary_artifact
+from .service import (
+    MODE_MAP,
+    build_meta_payload,
+    parse_bvid,
+    parse_limit,
+    parse_search_limit,
+    parse_search_page,
+    resolve_video,
+    run_comments,
+    run_inspect,
+    run_search,
+    run_subtitles,
+    write_meta_artifact,
+    write_summary_artifact,
+)
 
 
 class CliArgumentParser(argparse.ArgumentParser):
@@ -30,6 +45,13 @@ class Logger:
 
 def default_output_dir(bvid: str) -> Path:
     return (Path(__file__).resolve().parents[2] / "output" / bvid).resolve()
+
+
+
+def default_search_output_dir(keyword: str) -> Path:
+    slug = "-".join(keyword.strip().split()) or "search"
+    slug = re.sub(r"[\\/]+", "-", slug)
+    return (Path(__file__).resolve().parents[2] / "output" / "search" / slug).resolve()
 
 
 
@@ -69,6 +91,13 @@ def build_parser() -> argparse.ArgumentParser:
     comments_parser.add_argument("--subreply-limit", type=parse_limit, default=10, help="subreply limit per root comment; supports all")
     add_global_options(comments_parser)
 
+    search_parser = subparsers.add_parser("search", help="search bilibili videos by keyword")
+    search_parser.add_argument("keyword", nargs="+", help="search keyword")
+    search_parser.add_argument("--page", type=parse_search_page, default=1, help="search result page; default 1")
+    search_parser.add_argument("--limit", type=parse_search_limit, default=10, help="max compact results to return; default 10, max 20")
+    search_parser.add_argument("--save-raw", action="store_true", help="save the full raw search payload under output/search/<keyword>/")
+    add_global_options(search_parser)
+
     doctor_parser = subparsers.add_parser("doctor", help="check local environment readiness")
     add_global_options(doctor_parser)
 
@@ -80,6 +109,12 @@ def envelope_input(ctx: CommandContext) -> dict[str, Any]:
     payload: dict[str, Any] = {"session_name": ctx.session_name}
     if ctx.bvid is not None:
         payload["bvid"] = ctx.bvid
+    if ctx.keyword is not None:
+        payload["keyword"] = ctx.keyword
+    if ctx.page is not None:
+        payload["page"] = ctx.page
+    if ctx.limit is not None:
+        payload["limit"] = ctx.limit
     return payload
 
 
@@ -125,10 +160,17 @@ def print_result(envelope: ResultEnvelope, json_output: bool) -> None:
 
 def resolve_ctx(args: argparse.Namespace) -> CommandContext:
     bvid = getattr(args, "bvid", None)
+    keyword_tokens = getattr(args, "keyword", None)
+    keyword = " ".join(keyword_tokens).strip() if keyword_tokens else None
     out_dir = default_output_dir(bvid) if bvid else None
+    if getattr(args, "save_raw", False) and keyword:
+        out_dir = default_search_output_dir(keyword)
     return CommandContext(
         command=args.command,
         bvid=bvid,
+        keyword=keyword,
+        page=getattr(args, "page", None),
+        limit=getattr(args, "limit", None),
         session_name=args.session_name,
         out_dir=out_dir,
         json_output=args.json_output,
@@ -145,6 +187,20 @@ def run_command(args: argparse.Namespace) -> ResultEnvelope:
         logger.log("doctor", "running environment checks")
         checks = [to_plain_data(item) for item in run_doctor(ctx.session_name)]
         return success_envelope(ctx, {"checks": checks}, None)
+
+    if args.command == "search":
+        logger.log("search.open", f"keyword={ctx.keyword} page={ctx.page} limit={ctx.limit}")
+        browser = BrowserClient(ctx.session_name)
+        payload, manifest = run_search(
+            browser,
+            ctx.keyword or "",
+            ctx.page or 1,
+            ctx.limit or 10,
+            save_raw=bool(getattr(args, "save_raw", False)),
+            out_dir=ctx.out_dir,
+        )
+        logger.log("search.results", f"returned={payload['search']['returned']}")
+        return success_envelope(ctx, payload, manifest)
 
     logger.log("resolve_video", f"resolving {ctx.bvid}")
     browser = BrowserClient(ctx.session_name)
@@ -194,6 +250,10 @@ def run_command(args: argparse.Namespace) -> ResultEnvelope:
 def extract_error_context(argv: list[str]) -> CommandContext:
     command = "unknown"
     bvid = None
+    keyword = None
+    page = None
+    limit = None
+    save_raw = False
     session_name = "main"
     json_output = False
     verbose = False
@@ -201,15 +261,34 @@ def extract_error_context(argv: list[str]) -> CommandContext:
     index = 0
     while index < len(argv):
         token = argv[index]
-        if token in {"inspect", "meta", "subtitles", "comments", "doctor"}:
+        if token in {"inspect", "meta", "subtitles", "comments", "doctor", "search"}:
             command = token
-            if token != "doctor" and index + 1 < len(argv) and not argv[index + 1].startswith("-"):
+            if token == "search":
+                keyword_parts: list[str] = []
+                probe = index + 1
+                while probe < len(argv) and not argv[probe].startswith("-"):
+                    keyword_parts.append(argv[probe])
+                    probe += 1
+                keyword = " ".join(keyword_parts).strip() or None
+            elif token != "doctor" and index + 1 < len(argv) and not argv[index + 1].startswith("-"):
                 bvid = argv[index + 1]
             index += 1
             continue
         if token == "--session-name" and index + 1 < len(argv):
             session_name = argv[index + 1]
             index += 2
+            continue
+        if token == "--page" and index + 1 < len(argv):
+            page = int(argv[index + 1])
+            index += 2
+            continue
+        if token == "--limit" and index + 1 < len(argv):
+            limit = int(argv[index + 1])
+            index += 2
+            continue
+        if token == "--save-raw":
+            save_raw = True
+            index += 1
             continue
         if token == "--json":
             json_output = True
@@ -222,9 +301,14 @@ def extract_error_context(argv: list[str]) -> CommandContext:
         index += 1
 
     out_dir = default_output_dir(bvid) if bvid else None
+    if save_raw and keyword:
+        out_dir = default_search_output_dir(keyword)
     return CommandContext(
         command=command,
         bvid=bvid,
+        keyword=keyword,
+        page=page,
+        limit=limit,
         session_name=session_name,
         out_dir=out_dir,
         json_output=json_output,

@@ -41,10 +41,9 @@ python3 -m bili_inspector --help
 ```bash
 bili-inspector inspect <bvid> [options]
 bili-inspector meta <bvid> [options]
-bili-inspector subtitles <bvid> [options]
 bili-inspector comments <bvid> [options]
+bili-inspector search <keyword...> [options]
 bili-inspector doctor [options]
-bili-inspector --help
 bili-inspector --version
 ```
 
@@ -111,6 +110,32 @@ bili-inspector subtitles BV1aurMBCEkE --lang ai-zh --json
 
 ```bash
 bili-inspector comments BV1aurMBCEkE --mode hot --comment-limit 5 --json
+```
+
+
+### `search <keyword...>`
+
+按关键词搜索 Bilibili 视频结果。默认只返回**精简结果**，方便 AI 或脚本直接消费：
+
+- `title`
+- `bvid`
+- `pubdate`
+- `play`
+
+选项：
+
+```bash
+--page <n>      页码，默认 1
+--limit <n>     返回条数，默认 10，最大 20
+--save-raw      额外把完整原始搜索结果保存到文件
+```
+
+示例：
+
+```bash
+bili-inspector search 原神 启动器 --json
+bili-inspector search 原神 启动器 --page 2 --limit 5 --json
+bili-inspector search 原神 启动器 --json --save-raw
 ```
 
 ### `doctor`
@@ -196,6 +221,45 @@ bili-inspector doctor --json
 }
 ```
 
+### Search Success Example
+
+```json
+{
+  "ok": true,
+  "schema_version": "1",
+  "command": "search",
+  "input": {
+    "keyword": "原神 启动器",
+    "page": 1,
+    "limit": 10,
+    "session_name": "main"
+  },
+  "data": {
+    "search": {
+      "keyword": "原神 启动器",
+      "page": 1,
+      "limit": 10,
+      "returned": 2,
+      "results": [
+        {
+          "title": "原神 启动器",
+          "bvid": "BV1aaaaaa111",
+          "pubdate": "2024-03-01 17:50:00",
+          "play": "12.3万"
+        }
+      ]
+    }
+  },
+  "warnings": []
+}
+```
+
+默认 `search` 不写输出文件；只有显式传 `--save-raw` 时，才会把完整原始搜索结果保存到：
+
+```text
+output/search/<keyword>/raw.json
+```
+
 ### Error
 
 ```json
@@ -234,6 +298,14 @@ bili-inspector doctor --json
 - `comments`：只重建 `comments/`，保留 `meta.json` 与 `subtitles/`，并重写根目录 `README.md`
 
 因此，同一个 BVID 可以安全分步抓取，目录会逐渐汇总成完整快照，而不是互相覆盖掉。
+
+`search` 默认**不写文件**。只有显式传 `--save-raw` 时，才会写入：
+
+```text
+output/search/<keyword>/raw.json
+```
+
+用于保留完整原始搜索结果；stdout 仍然只返回精简结果。
 
 `inspect` 典型产物：
 
