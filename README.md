@@ -286,10 +286,10 @@ output/search/<keyword>/raw.json
 
 ## Output Files
 
-默认输出目录固定为项目根目录：
+默认输出目录为项目根目录下的 `output/` 子目录：
 
 ```text
-/Users/tanmika/WebProject/bili-inspector/output/<bvid>
+output/<bvid>
 ```
 
 `inspect` 会先清空整个 `output/<bvid>/` 再重建，因此目录内容始终代表**本次完整抓取的快照**。

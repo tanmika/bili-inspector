@@ -1,7 +1,7 @@
 import shutil
 from pathlib import Path
 
-from bili_inspector.cli import build_parser, default_output_dir, run_command
+from bili_inspector.cli import build_parser, default_output_dir, default_search_output_dir, run_command
 
 
 class FakeBrowser:
@@ -295,7 +295,7 @@ def test_run_command_search_save_raw_writes_artifact(monkeypatch):
                 },
             }
 
-    out_dir = Path("/Users/tanmika/WebProject/bili-inspector/output/search/原神-启动器")
+    out_dir = default_search_output_dir("原神 启动器")
     shutil.rmtree(out_dir, ignore_errors=True)
     monkeypatch.setattr("bili_inspector.cli.BrowserClient", SearchBrowser)
 

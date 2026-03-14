@@ -6,7 +6,7 @@ from bili_inspector.cli import build_parser, default_output_dir, default_search_
 from bili_inspector.errors import CliUsageError
 
 
-REPO_ROOT = Path("/Users/tanmika/WebProject/bili-inspector").resolve()
+REPO_ROOT = Path(__file__).resolve().parents[1]
 
 
 
