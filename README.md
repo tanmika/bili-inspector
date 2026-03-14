@@ -86,7 +86,7 @@ bili-inspector --version
 示例：
 
 ```bash
-bili-inspector inspect BV1aurMBCEkE --json
+bili-inspector inspect BV1xxxxxxxxx --json
 ```
 
 ### `meta <bvid>`
@@ -94,7 +94,7 @@ bili-inspector inspect BV1aurMBCEkE --json
 只抓视频基础信息和可用性摘要，并刷新根目录 `README.md`：
 
 ```bash
-bili-inspector meta BV1aurMBCEkE --json
+bili-inspector meta BV1xxxxxxxxx --json
 ```
 
 ### `subtitles <bvid>`
@@ -102,7 +102,7 @@ bili-inspector meta BV1aurMBCEkE --json
 抓字幕轨和字幕文件。默认只导出 1 种语言；如需指定语言，可显式传 `--lang`。该命令只会重建 `subtitles/` 分区，并自动刷新根目录 `README.md`：
 
 ```bash
-bili-inspector subtitles BV1aurMBCEkE --lang ai-zh --json
+bili-inspector subtitles BV1xxxxxxxxx --lang ai-zh --json
 ```
 
 ### `comments <bvid>`
@@ -110,7 +110,7 @@ bili-inspector subtitles BV1aurMBCEkE --lang ai-zh --json
 抓评论和楼中楼。该命令只会重建 `comments/` 分区，并自动刷新根目录 `README.md`：
 
 ```bash
-bili-inspector comments BV1aurMBCEkE --mode hot --comment-limit 5 --json
+bili-inspector comments BV1xxxxxxxxx --mode hot --comment-limit 5 --json
 ```
 
 
@@ -134,9 +134,9 @@ bili-inspector comments BV1aurMBCEkE --mode hot --comment-limit 5 --json
 示例：
 
 ```bash
-bili-inspector search 原神 启动器 --json
-bili-inspector search 原神 启动器 --page 2 --limit 5 --json
-bili-inspector search 原神 启动器 --json --save-raw
+bili-inspector search python 教程 --json
+bili-inspector search python 教程 --page 2 --limit 5 --json
+bili-inspector search python 教程 --json --save-raw
 ```
 
 ### `doctor`
@@ -190,19 +190,19 @@ bili-inspector doctor --json
   "schema_version": "1",
   "command": "meta",
   "input": {
-    "bvid": "BV1aurMBCEkE",
+    "bvid": "BV1xxxxxxxxx",
     "session_name": "main"
   },
   "data": {
     "video": {
-      "bvid": "BV1aurMBCEkE",
-      "aid": "115865802510979",
-      "cid": "35287862688",
-      "title": "十分钟教你解开XZ1c日版bl锁",
-      "owner_name": "思想不科學實驗",
-      "pubdate": "2026-01-09 23:19:59",
-      "reply_count": 112,
-      "url": "https://www.bilibili.com/video/BV1aurMBCEkE/"
+      "bvid": "BV1xxxxxxxxx",
+      "aid": "123456789012345",
+      "cid": "12345678901",
+      "title": "示例视频标题",
+      "owner_name": "示例UP主",
+      "pubdate": "2025-01-01 12:00:00",
+      "reply_count": 100,
+      "url": "https://www.bilibili.com/video/BV1xxxxxxxxx/"
     },
     "availability": {
       "subtitles": {
@@ -210,12 +210,12 @@ bili-inspector doctor --json
         "langs": ["ai-zh"]
       },
       "comments": {
-        "reply_count": 112
+        "reply_count": 100
       }
     }
   },
   "artifacts": {
-    "output_dir": "/abs/path/output/BV1aurMBCEkE",
+    "output_dir": "/abs/path/output/BV1xxxxxxxxx",
     "files": ["README.md", "meta.json"]
   },
   "warnings": []
@@ -230,14 +230,14 @@ bili-inspector doctor --json
   "schema_version": "1",
   "command": "search",
   "input": {
-    "keyword": "原神 启动器",
+    "keyword": "python 教程",
     "page": 1,
     "limit": 10,
     "session_name": "main"
   },
   "data": {
     "search": {
-      "keyword": "原神 启动器",
+      "keyword": "python 教程",
       "page": 1,
       "limit": 10,
       "total": 1234,
@@ -245,7 +245,7 @@ bili-inspector doctor --json
       "returned": 2,
       "results": [
         {
-          "title": "原神 启动器",
+          "title": "python 教程",
           "bvid": "BV1aaaaaa111",
           "pubdate": "2024-03-01 17:50:00",
           "play": "12.3万"
@@ -271,7 +271,7 @@ output/search/<keyword>/raw.json
   "schema_version": "1",
   "command": "subtitles",
   "input": {
-    "bvid": "BV1aurMBCEkE",
+    "bvid": "BV1xxxxxxxxx",
     "session_name": "main"
   },
   "error": {
@@ -313,7 +313,7 @@ output/search/<keyword>/raw.json
 `inspect` 典型产物：
 
 ```text
-output/BV1aurMBCEkE/
+output/BV1xxxxxxxxx/
 ├── README.md
 ├── meta.json
 ├── comments/
@@ -381,21 +381,21 @@ bili-inspector doctor --json
 ### 2. 先看 meta，再决定是否抓大内容
 
 ```bash
-bili-inspector meta BV1aurMBCEkE --json
+bili-inspector meta BV1xxxxxxxxx --json
 ```
 
 ### 3. 只在需要时抓字幕或评论
 
 ```bash
-bili-inspector subtitles BV1aurMBCEkE --json
-bili-inspector subtitles BV1aurMBCEkE --lang ai-zh --json
-bili-inspector comments BV1aurMBCEkE --mode hot --comment-limit 10 --json
+bili-inspector subtitles BV1xxxxxxxxx --json
+bili-inspector subtitles BV1xxxxxxxxx --lang ai-zh --json
+bili-inspector comments BV1xxxxxxxxx --mode hot --comment-limit 10 --json
 ```
 
 ### 4. 需要完整导出时再用 inspect
 
 ```bash
-bili-inspector inspect BV1aurMBCEkE --json
+bili-inspector inspect BV1xxxxxxxxx --json
 ```
 
 ### 5. AI 默认读取优先级

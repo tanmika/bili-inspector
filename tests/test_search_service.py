@@ -21,7 +21,7 @@ class FakeBrowser:
                 "numPages": 62,
                 "result": [
                     {
-                        "title": "<em class=\"keyword\">原神</em> 启动器",
+                        "title": "<em class=\"keyword\">示例</em> 关键词",
                         "bvid": "BV1aaaaaa111",
                         "pubdate": 1709286600,
                         "play": "12.3万",
@@ -45,18 +45,18 @@ class FakeBrowser:
 
 
 def test_strip_search_title_html():
-    assert strip_search_title_html("<em class=\"keyword\">原神</em>&amp;启动器") == "原神&启动器"
+    assert strip_search_title_html("<em class=\"keyword\">示例</em>&amp;关键词") == "示例&关键词"
 
 
 
 def test_run_search_returns_compact_results_without_artifacts():
     browser = FakeBrowser()
-    payload, manifest = run_search(browser, "原神 启动器", 1, 10)
+    payload, manifest = run_search(browser, "示例 关键词", 1, 10)
 
     assert manifest is None
     assert payload == {
         "search": {
-            "keyword": "原神 启动器",
+            "keyword": "示例 关键词",
             "page": 1,
             "limit": 10,
             "total": 1234,
@@ -64,7 +64,7 @@ def test_run_search_returns_compact_results_without_artifacts():
             "returned": 2,
             "results": [
                 {
-                    "title": "原神 启动器",
+                    "title": "示例 关键词",
                     "bvid": "BV1aaaaaa111",
                     "pubdate": "2024-03-01 17:50:00",
                     "play": "12.3万",
@@ -85,11 +85,11 @@ def test_run_search_returns_compact_results_without_artifacts():
 
 def test_run_search_save_raw_writes_artifact():
     browser = FakeBrowser()
-    out_dir = default_search_output_dir("原神 启动器")
+    out_dir = default_search_output_dir("示例 关键词")
     shutil.rmtree(out_dir, ignore_errors=True)
 
     try:
-        payload, manifest = run_search(browser, "原神 启动器", 1, 1, save_raw=True, out_dir=out_dir)
+        payload, manifest = run_search(browser, "示例 关键词", 1, 1, save_raw=True, out_dir=out_dir)
         assert payload["search"]["returned"] == 1
         assert manifest is not None
         assert manifest.output_dir == str(out_dir)

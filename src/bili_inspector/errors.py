@@ -44,7 +44,7 @@ class InvalidBvidError(InspectorError):
             message=f"Invalid BVID: {raw}",
             stage="input.parse_bvid",
             retryable=False,
-            hint="Use a BVID like BV1aurMBCEkE.",
+            hint="Use a BVID like BV1xxxxxxxxx.",
             exit_code=EXIT_CLI,
         )
 

@@ -13,12 +13,12 @@ class FakeBrowser:
 def fake_meta(bvid: str):
     return {
         "bvid": bvid,
-        "aid": "115865802510979",
-        "cid": "35287862688",
+        "aid": "123456789012345",
+        "cid": "12345678901",
         "title": "demo",
         "owner_name": "owner",
-        "pubdate": "2026-01-09 23:19:59",
-        "reply_count": 112,
+        "pubdate": "2025-01-01 12:00:00",
+        "reply_count": 100,
         "url": f"https://www.bilibili.com/video/{bvid}/",
         "desc": "desc",
     }
@@ -26,7 +26,7 @@ def fake_meta(bvid: str):
 
 
 def test_run_command_meta_uses_fixed_repo_output_dir(monkeypatch):
-    bvid = "BV1aurMBCEkE"
+    bvid = "BV1xxxxxxxxx"
     out_dir = default_output_dir(bvid)
     shutil.rmtree(out_dir, ignore_errors=True)
 
@@ -239,7 +239,7 @@ def test_run_command_search_returns_compact_results_without_artifacts(monkeypatc
                     "numResults": 1234,
                     "numPages": 62,
                     "result": [
-                        {"title": "<em class=\"keyword\">原神</em> 启动器", "bvid": "BV1aaaaaa111", "pubdate": 1709286600, "play": "12.3万"},
+                        {"title": "<em class=\"keyword\">示例</em> 关键词", "bvid": "BV1aaaaaa111", "pubdate": 1709286600, "play": "12.3万"},
                         {"title": "第二条", "bvid": "BV1bbbbbb222", "pubdate": 1709373000, "play": "3.4万"},
                     ],
                 },
@@ -248,24 +248,24 @@ def test_run_command_search_returns_compact_results_without_artifacts(monkeypatc
     monkeypatch.setattr("bili_inspector.cli.BrowserClient", SearchBrowser)
 
     parser = build_parser()
-    args = parser.parse_args(["search", "原神", "启动器", "--json"])
+    args = parser.parse_args(["search", "示例", "关键词", "--json"])
     envelope = run_command(args).to_dict()
 
     assert envelope == {
         "ok": True,
         "schema_version": "1",
         "command": "search",
-        "input": {"keyword": "原神 启动器", "page": 1, "limit": 10, "session_name": "main"},
+        "input": {"keyword": "示例 关键词", "page": 1, "limit": 10, "session_name": "main"},
         "data": {
             "search": {
-                "keyword": "原神 启动器",
+                "keyword": "示例 关键词",
                 "page": 1,
                 "limit": 10,
                 "total": 1234,
                 "pages": 62,
                 "returned": 2,
                 "results": [
-                    {"title": "原神 启动器", "bvid": "BV1aaaaaa111", "pubdate": "2024-03-01 17:50:00", "play": "12.3万"},
+                    {"title": "示例 关键词", "bvid": "BV1aaaaaa111", "pubdate": "2024-03-01 17:50:00", "play": "12.3万"},
                     {"title": "第二条", "bvid": "BV1bbbbbb222", "pubdate": "2024-03-02 17:50:00", "play": "3.4万"},
                 ],
             }
@@ -290,17 +290,17 @@ def test_run_command_search_save_raw_writes_artifact(monkeypatch):
                     "numResults": 1234,
                     "numPages": 62,
                     "result": [
-                        {"title": "<em class=\"keyword\">原神</em> 启动器", "bvid": "BV1aaaaaa111", "pubdate": 1709286600, "play": "12.3万"},
+                        {"title": "<em class=\"keyword\">示例</em> 关键词", "bvid": "BV1aaaaaa111", "pubdate": 1709286600, "play": "12.3万"},
                     ],
                 },
             }
 
-    out_dir = default_search_output_dir("原神 启动器")
+    out_dir = default_search_output_dir("示例 关键词")
     shutil.rmtree(out_dir, ignore_errors=True)
     monkeypatch.setattr("bili_inspector.cli.BrowserClient", SearchBrowser)
 
     parser = build_parser()
-    args = parser.parse_args(["search", "原神", "启动器", "--json", "--save-raw"])
+    args = parser.parse_args(["search", "示例", "关键词", "--json", "--save-raw"])
     envelope = run_command(args).to_dict()
 
     try:

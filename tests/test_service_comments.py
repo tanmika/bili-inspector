@@ -11,14 +11,14 @@ class FakeBrowser:
 
 def test_run_comments_writes_artifacts(monkeypatch, tmp_path: Path):
     meta = {
-        "bvid": "BV1aurMBCEkE",
-        "aid": "115865802510979",
-        "cid": "35287862688",
+        "bvid": "BV1xxxxxxxxx",
+        "aid": "123456789012345",
+        "cid": "12345678901",
         "title": "demo",
         "owner_name": "owner",
-        "pubdate": "2026-01-09 23:19:59",
-        "reply_count": 112,
-        "url": "https://www.bilibili.com/video/BV1aurMBCEkE/",
+        "pubdate": "2025-01-01 12:00:00",
+        "reply_count": 100,
+        "url": "https://www.bilibili.com/video/BV1xxxxxxxxx/",
         "desc": "desc",
     }
     monkeypatch.setattr(
@@ -40,14 +40,14 @@ def test_run_comments_writes_artifacts(monkeypatch, tmp_path: Path):
 
 def test_run_comments_marks_all_as_not_truncated(monkeypatch):
     meta = {
-        "bvid": "BV1aurMBCEkE",
-        "aid": "115865802510979",
-        "cid": "35287862688",
+        "bvid": "BV1xxxxxxxxx",
+        "aid": "123456789012345",
+        "cid": "12345678901",
         "title": "demo",
         "owner_name": "owner",
-        "pubdate": "2026-01-09 23:19:59",
-        "reply_count": 112,
-        "url": "https://www.bilibili.com/video/BV1aurMBCEkE/",
+        "pubdate": "2025-01-01 12:00:00",
+        "reply_count": 100,
+        "url": "https://www.bilibili.com/video/BV1xxxxxxxxx/",
         "desc": "desc",
     }
     monkeypatch.setattr(
